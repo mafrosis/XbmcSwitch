@@ -52,8 +52,8 @@ class SerialMonitor():
             out, err = grep.communicate()
             if len(out.strip()) > 0:
                 procs = out.split("\n")
-                for p in procs:
-                    if PROC_NAME in p:
+                for proc in procs:
+                    if PROC_NAME in proc and 'grep' not in proc:
                         xbmc_running = True
 
             # write over serial will ignite LED
