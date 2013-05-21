@@ -1,8 +1,8 @@
 int pushButton = 2;
-int switchLed = 13;
 int mainLed = 6;
 
 int switchState = 1;
+int noSerialCount = 0;
 
 #define ON 49	// 1
 #define OFF 48	// 0
@@ -16,15 +16,16 @@ void setup(){
 	// turn on pullup resistor
 	digitalWrite(pushButton, HIGH);
 
-	// output LED ports
-	pinMode(switchLed, OUTPUT); 
+	// output port for LED
 	pinMode(mainLed, OUTPUT); 
 }
 
 void loop(){
+	int serialRead = -1;
+
 	if (Serial.available() > 0) {
 		// read over serial port
-		int serialRead = Serial.read();
+		serialRead = Serial.read();
 
 		// set LED on/off from serial
 		if(serialRead == ON) {
@@ -33,22 +34,28 @@ void loop(){
 			digitalWrite(mainLed, 0);
 		}
 
-		// check for button press
-		int sensorRead = digitalRead(pushButton);
+		noSerialCount = 0;
+	}else{
+		noSerialCount += 1;
 
-		if(switchState != sensorRead) {
-			switchState = sensorRead;
-
-			// send on serial when switch pushed
-			if(sensorRead == 0) {
-				Serial.println(serialRead);
-			}
+		// if no serial input for 1 second, switch off LED
+		if(noSerialCount == 5) {
+			digitalWrite(mainLed, 0);
 		}
-
-		// write the inverted switch value to the LED
-		digitalWrite(switchLed, !sensorRead);
-
-		// introduce a sensible delay
-		delay(100);
 	}
+
+	// check for button press
+	int sensorRead = digitalRead(pushButton);
+
+	if(switchState != sensorRead) {
+		switchState = sensorRead;
+
+		// send on serial when switch pushed
+		if(sensorRead == 0) {
+			Serial.println(serialRead);
+		}
+	}
+
+	// introduce a sensible delay
+	delay(100);
 }
