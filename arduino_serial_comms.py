@@ -1,13 +1,15 @@
 #! /usr/bin/env python
 
 import serial
+import subprocess
 import time
 
 from subprocess import Popen, PIPE
 
-
 PORT = "/dev/tty.usbmodemfd1121"
+PORT = "/dev/ttyACM0"
 PROC_NAME = "/usr/local/bin/xbmc"
+INIT_SCRIPT_NAME = "xbmc"
 RECONNECT_SLEEP = 5
 MONITOR_SLEEP = 0.2
 
@@ -38,10 +40,6 @@ class SerialMonitor():
 
     def monitor(self):
         try:
-            data = self.ser.readline()
-            if len(data) > 0:
-                print data.strip()
-
             xbmc_running = False
 
             # check xbmc running
@@ -56,7 +54,15 @@ class SerialMonitor():
                     if PROC_NAME in proc and 'grep' not in proc:
                         xbmc_running = True
 
-            # write over serial will ignite LED
+            # read from serial port, when message received toggle XBMC running
+            data = self.ser.readline()
+            if len(data) > 0:
+                if xbmc_running is False:
+                    subprocess.call(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'start'])
+                else:
+                    subprocess.call(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'stop'])
+
+            # write over serial to ignite LED
             if xbmc_running is True:
                 self.ser.write('1')
             else:
@@ -82,7 +88,6 @@ class SerialMonitor():
                         print "Connected"
                         self.state = states.RUNNING
                     else:
-                        print "Failed to connect"
                         time.sleep(RECONNECT_SLEEP)
 
                 elif self.state == states.RUNNING:
