@@ -1,12 +1,10 @@
 #! /usr/bin/env python
 
 import serial
-import subprocess
 import time
 
 from subprocess import Popen, PIPE
 
-PORT = "/dev/tty.usbmodemfd1121"
 PORT = "/dev/ttyACM0"
 PROC_NAME = "/usr/local/bin/xbmc"
 INIT_SCRIPT_NAME = "xbmc"
@@ -24,6 +22,7 @@ states = enum("CONNECTING", "RUNNING")
 class SerialMonitor():
     ser = None
     state = None
+    last_connect_error = None
 
     def __init__(self, port):
         self.port = port
@@ -34,7 +33,8 @@ class SerialMonitor():
             self.ser = serial.Serial(self.port, 9600, timeout=0)
             self.ser.setRTS(True)
             self.ser.setDTR(True)
-        except serial.serialutil.SerialException:
+        except serial.serialutil.SerialException as e:
+            self.last_connect_error = str(e)
             return False
         return True
 
@@ -43,8 +43,8 @@ class SerialMonitor():
             xbmc_running = False
 
             # check xbmc running
-            grep = Popen(['grep', PROC_NAME],
-                stdin=Popen(['ps', '-ef'], stdout=PIPE).stdout,
+            grep = Popen(['/bin/grep', PROC_NAME],
+                stdin=Popen(['/bin/ps', '-ef'], stdout=PIPE).stdout,
                 stdout=PIPE
             )
             out, err = grep.communicate()
@@ -54,13 +54,17 @@ class SerialMonitor():
                     if PROC_NAME in proc and 'grep' not in proc:
                         xbmc_running = True
 
-            # read from serial port, when message received toggle XBMC running
+            # read from serial port
             data = self.ser.readline()
             if len(data) > 0:
-                if xbmc_running is False:
-                    subprocess.call(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'start'])
-                else:
-                    subprocess.call(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'stop'])
+                print "Button press received on Serial port"
+
+                # when message received toggle XBMC running
+                xbmc = Popen(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'start'],
+                    stdin=PIPE,
+                    stdout=PIPE
+                )
+                out, err = xbmc.communicate()
 
             # write over serial to ignite LED
             if xbmc_running is True:
@@ -73,21 +77,22 @@ class SerialMonitor():
 
         except serial.SerialTimeoutException:
             pass
-        except (OSError, serial.serialutil.SerialException):
-            print "Disconnected"
+        except (OSError, serial.serialutil.SerialException) as e:
+            print "Disconnected ({0}: {1})".format(e.__class__.__name__, e)
             self.state = states.CONNECTING
             time.sleep(1)
 
     def run(self):
-        self.alive = True
+        alive = True
 
         try:
-            while self.alive:
+            while alive is True:
                 if self.state == states.CONNECTING:
                     if self.connect():
                         print "Connected"
                         self.state = states.RUNNING
                     else:
+                        print "Connecting: {0}".format(self.last_connect_error)
                         time.sleep(RECONNECT_SLEEP)
 
                 elif self.state == states.RUNNING:
@@ -95,12 +100,13 @@ class SerialMonitor():
                     time.sleep(MONITOR_SLEEP)
 
         except KeyboardInterrupt:
-            self.alive = False
+            alive = False
         finally:
             if self.ser is not None:
                 self.ser.close()
 
 
 if __name__ == "__main__":
+    print "Starting Arduino serial comms on port {0}".format(PORT)
     sr = SerialMonitor(PORT)
     sr.run()
