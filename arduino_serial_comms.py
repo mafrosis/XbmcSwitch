@@ -7,6 +7,8 @@ from subprocess import Popen, PIPE
 
 # Arduino serial port
 SERIAL_PORT = "/dev/ttyACM{0}"
+
+# XBMC settings
 PROC_NAME = "/usr/local/bin/xbmc"
 INIT_SCRIPT_NAME = "xbmc"
 RECONNECT_SLEEP = 5
@@ -62,7 +64,12 @@ class SerialMonitor():
                 print "Button press received on Serial port"
 
                 # when message received toggle XBMC running
-                xbmc = Popen(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), 'start'],
+                if xbmc_running is True:
+                    command = "stop"
+                else:
+                    command = "start"
+
+                xbmc = Popen(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), command],
                     stdin=PIPE,
                     stdout=PIPE
                 )
