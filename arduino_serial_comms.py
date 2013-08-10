@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import logging
 import serial
 import time
 
@@ -11,6 +12,11 @@ SERIAL_PORT = "/dev/ttyACM{0}"
 # XBMC settings
 PROC_NAME = "/usr/local/bin/xbmc"
 INIT_SCRIPT_NAME = "xbmc"
+
+# Logging
+LOG_FILE = "/var/log/mafro/XbmcSwitch/{0}.log"
+LOG_LEVEL = logging.DEBUG
+
 RECONNECT_SLEEP = 5
 MONITOR_SLEEP = 0.2
 
@@ -25,11 +31,13 @@ states = enum("CONNECTING", "RUNNING")
 class SerialMonitor():
     ser = None
     state = None
+    logger = None
     last_connect_error = None
 
-    def __init__(self, port):
+    def __init__(self, port, logger):
         self.port = port
         self.state = states.CONNECTING
+        self.logger = logger
 
     def connect(self):
         for n in xrange(2):
@@ -61,7 +69,7 @@ class SerialMonitor():
             # read from serial port
             data = self.ser.readline()
             if len(data) > 0:
-                print "Button press received on Serial port"
+                logger.info("Button press received on Serial port")
 
                 # when message received toggle XBMC running
                 if xbmc_running is True:
@@ -74,6 +82,7 @@ class SerialMonitor():
                     stdout=PIPE
                 )
                 out, err = xbmc.communicate()
+                logger.debug(out)
 
             # write over serial to ignite LED
             if xbmc_running is True:
@@ -87,7 +96,7 @@ class SerialMonitor():
         except serial.SerialTimeoutException:
             pass
         except (OSError, serial.serialutil.SerialException) as e:
-            print "Disconnected ({0}: {1})".format(e.__class__.__name__, e)
+            logger.error("Disconnected ({0}: {1})".format(e.__class__.__name__, e))
             self.state = states.CONNECTING
             time.sleep(1)
 
@@ -98,15 +107,17 @@ class SerialMonitor():
             while self.alive is True:
                 if self.state == states.CONNECTING:
                     if self.connect():
-                        print "Connected"
+                        logger.info("Connected")
                         self.state = states.RUNNING
                     else:
-                        print "Connecting: {0}".format(self.last_connect_error)
+                        logger.info("Connecting: {0}".format(self.last_connect_error))
                         time.sleep(RECONNECT_SLEEP)
 
                 elif self.state == states.RUNNING:
                     self.monitor()
                     time.sleep(MONITOR_SLEEP)
+
+            logger.info("Terminated")
 
         except KeyboardInterrupt:
             self.alive = False
@@ -119,6 +130,16 @@ class SerialMonitor():
 
 
 if __name__ == "__main__":
-    print "Starting Arduino serial comms on port {0}".format(PORT)
-    sr = SerialMonitor(PORT)
+    # setup app logging
+    logger = logging.getLogger("XbmcSwitch")
+    logger.setLevel(LOG_LEVEL)
+    handler = logging.FileHandler(LOG_FILE.format("app"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    )
+    logger.addHandler(handler)
+
+    # instantiate serial monitoring class
+    logger.info("Starting Arduino serial comms on port {0}".format(SERIAL_PORT[:-3]))
+    sr = SerialMonitor(SERIAL_PORT, logger)
     sr.run()
