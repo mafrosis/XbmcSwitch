@@ -1,5 +1,5 @@
 int pushButton = 2;
-int mainLed = 6;
+int mainLed = 3;
 
 int switchState = 1;
 int noSerialCount = 0;
