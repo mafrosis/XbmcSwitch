@@ -5,7 +5,8 @@ import time
 
 from subprocess import Popen, PIPE
 
-PORT = "/dev/ttyACM0"
+# Arduino serial port
+SERIAL_PORT = "/dev/ttyACM{0}"
 PROC_NAME = "/usr/local/bin/xbmc"
 INIT_SCRIPT_NAME = "xbmc"
 RECONNECT_SLEEP = 5
@@ -29,14 +30,15 @@ class SerialMonitor():
         self.state = states.CONNECTING
 
     def connect(self):
-        try:
-            self.ser = serial.Serial(self.port, 9600, timeout=0)
-            self.ser.setRTS(True)
-            self.ser.setDTR(True)
-        except serial.serialutil.SerialException as e:
-            self.last_connect_error = str(e)
-            return False
-        return True
+        for n in xrange(2):
+            try:
+                self.ser = serial.Serial(self.port.format(n), 9600, timeout=0)
+                self.ser.setRTS(True)
+                self.ser.setDTR(True)
+                return True
+            except serial.serialutil.SerialException as e:
+                self.last_connect_error = str(e)
+        return False
 
     def monitor(self):
         try:
