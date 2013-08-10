@@ -18,7 +18,7 @@ LOG_FILE = "/var/log/mafro/XbmcSwitch/{0}.log"
 LOG_LEVEL = logging.DEBUG
 
 RECONNECT_SLEEP = 5
-MONITOR_SLEEP = 0.2
+MONITOR_SLEEP = 0.5
 
 
 def enum(*sequential, **named):
@@ -89,9 +89,6 @@ class SerialMonitor():
                 self.ser.write('1')
             else:
                 self.ser.write('0')
-
-            # introduce a sensible delay
-            time.sleep(0.2)
 
         except serial.SerialTimeoutException:
             pass

@@ -38,8 +38,8 @@ void loop(){
 	}else{
 		noSerialCount += 1;
 
-		// if no serial input for 1 second, switch off LED
-		if(noSerialCount == 5) {
+		// if no serial input for 2 seconds, switch off LED
+		if(noSerialCount == 20) {
 			digitalWrite(mainLed, 0);
 		}
 	}
