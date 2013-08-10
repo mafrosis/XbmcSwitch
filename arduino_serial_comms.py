@@ -83,10 +83,10 @@ class SerialMonitor():
             time.sleep(1)
 
     def run(self):
-        alive = True
+        self.alive = True
 
         try:
-            while alive is True:
+            while self.alive is True:
                 if self.state == states.CONNECTING:
                     if self.connect():
                         print "Connected"
@@ -100,10 +100,13 @@ class SerialMonitor():
                     time.sleep(MONITOR_SLEEP)
 
         except KeyboardInterrupt:
-            alive = False
+            self.alive = False
         finally:
             if self.ser is not None:
                 self.ser.close()
+
+    def terminate(self):
+        self.alive = False
 
 
 if __name__ == "__main__":
