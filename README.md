@@ -28,7 +28,7 @@ The `arduino_serial_comms.py` script does all the hard work on the server, and h
 Extra System Configuration
 --------------------------
 
-I modified my XBMC start script to create its pid file in a directory owned by my user (which runs the `arduino_serial_comms.py` script).
+I modified my XBMC start script to [create its pid file in a directory owned by my user](http://serverfault.com/questions/159334/what-permission-to-write-pid-file-in-var-run) (which runs the `arduino_serial_comms.py` script).
 
     # Path of the PID file
     PID_FILE=/var/run/xbmc/xbmc.pid
