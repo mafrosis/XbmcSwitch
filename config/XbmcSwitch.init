@@ -1,0 +1,65 @@
+#! /bin/bash
+
+### BEGIN INIT INFO
+# Provides:          XbmcSwitch
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts script monitoring XbmcSwitch
+# Description:       starts script monitoring XbmcSwitch
+### END INIT INFO
+
+############### EDIT ME ##################
+
+# path to arduino comms script
+DAEMON=/home/mafro/.virtualenvs/XbmcSwitch/bin/python
+
+# options for the script
+DAEMON_OPTS=/srv/www/XbmcSwitch/arduino_serial_comms.py
+
+# script name
+NAME=XbmcSwitch
+
+# user
+RUN_AS=mafro
+
+# Path of the PID file
+PID_FILE=/var/run/xbmc/XbmcSwitch.pid
+if [ ! -d /var/run/xbmc ]; then
+    mkdir /var/run/xbmc    
+    /bin/chown mafro:mafro /var/run/xbmc    
+    /bin/chmod 755 /var/run/xbmc    
+fi
+
+############### END EDIT ME ##################
+
+test -x $DAEMON || exit 0
+
+set -e
+
+case "$1" in
+  start)
+        echo "Starting $NAME"
+		/sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
+        /bin/chown mafro:mafro $PID_FILE
+        ;;
+  stop)
+        echo "Stopping $NAME"
+        /sbin/start-stop-daemon --stop --pidfile $PID_FILE
+        ;;
+
+  restart|force-reload)
+        echo "Restarting $NAME"
+        /sbin/start-stop-daemon --stop --pidfile $PID_FILE
+        sleep 5
+		/sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
+        ;;
+  *)
+        N=/etc/init.d/$NAME
+        echo "Usage: $N {start|stop|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
