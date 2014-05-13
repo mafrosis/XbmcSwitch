@@ -29,7 +29,7 @@ states = enum("CONNECTING", "RUNNING")
 
 
 class SerialMonitor():
-    ser = None
+    serial_conn = None
     state = None
     logger = None
     last_connect_error = None
@@ -43,9 +43,9 @@ class SerialMonitor():
         for n in xrange(2):
             self.serial_number = n
             try:
-                self.ser = serial.Serial(self.port.format(n), 9600, timeout=0)
-                self.ser.setRTS(True)
-                self.ser.setDTR(True)
+                self.serial_conn = serial.Serial(self.port.format(n), 9600, timeout=0)
+                self.serial_conn.setRTS(True)
+                self.serial_conn.setDTR(True)
                 return True
             except serial.serialutil.SerialException as e:
                 if LOG_LEVEL == logging.DEBUG:
@@ -70,7 +70,7 @@ class SerialMonitor():
                         xbmc_running = True
 
             # read from serial port
-            data = self.ser.readline()
+            data = self.serial_conn.readline()
             if len(data) > 0:
                 logger.info("Button press received on Serial port")
 
@@ -91,9 +91,9 @@ class SerialMonitor():
 
             # write over serial to ignite LED
             if xbmc_running is True:
-                self.ser.write('1')
+                self.serial_conn.write('1')
             else:
-                self.ser.write('0')
+                self.serial_conn.write('0')
 
         except serial.SerialTimeoutException:
             pass
@@ -124,8 +124,8 @@ class SerialMonitor():
         except KeyboardInterrupt:
             self.alive = False
         finally:
-            if self.ser is not None:
-                self.ser.close()
+            if self.serial_conn is not None:
+                self.serial_conn.close()
 
     def terminate(self):
         self.alive = False
