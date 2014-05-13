@@ -11,7 +11,7 @@ SERIAL_PORT = "/dev/ttyACM{}"
 
 # XBMC settings
 PROC_NAME = "/usr/local/bin/xbmc"
-INIT_SCRIPT_NAME = "xbmc"
+INIT_SCRIPT_NAME = "/etc/init.d/xbmc"
 
 # Logging
 LOG_FILE = "/var/log/mafro/XbmcSwitch/{}.log"
@@ -80,7 +80,7 @@ class SerialMonitor():
                 else:
                     command = "start"
 
-                xbmc = Popen(['/etc/init.d/{0}'.format(INIT_SCRIPT_NAME), command],
+                xbmc = Popen([INIT_SCRIPT_NAME, command],
                     stdin=PIPE,
                     stdout=PIPE
                 )
