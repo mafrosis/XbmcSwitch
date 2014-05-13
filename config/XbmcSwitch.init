@@ -26,10 +26,12 @@ RUN_AS=mafro
 
 # Path of the PID file
 PID_FILE=/var/run/xbmc/XbmcSwitch.pid
+
+# Create and own a directory for the XBMC pid
 if [ ! -d /var/run/xbmc ]; then
-    mkdir /var/run/xbmc    
-    /bin/chown mafro:mafro /var/run/xbmc    
-    /bin/chmod 755 /var/run/xbmc    
+    mkdir /var/run/xbmc
+    /bin/chown $RUN_AS:$RUN_AS /var/run/xbmc
+    /bin/chmod 755 /var/run/xbmc
 fi
 
 ############### END EDIT ME ##################
@@ -41,7 +43,7 @@ set -e
 case "$1" in
   start)
         echo "Starting $NAME"
-		/sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
+        /sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
         /bin/chown mafro:mafro $PID_FILE
         ;;
   stop)
@@ -49,15 +51,15 @@ case "$1" in
         /sbin/start-stop-daemon --stop --pidfile $PID_FILE
         ;;
 
-  restart|force-reload)
+  restart)
         echo "Restarting $NAME"
         /sbin/start-stop-daemon --stop --pidfile $PID_FILE
         sleep 5
-		/sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
+        /sbin/start-stop-daemon --start -c $RUN_AS --background --pidfile $PID_FILE --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
         ;;
   *)
         N=/etc/init.d/$NAME
-        echo "Usage: $N {start|stop|restart|force-reload}" >&2
+        echo "Usage: $N {start|stop|restart}" >&2
         exit 1
         ;;
 esac
